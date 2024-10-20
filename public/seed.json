@@ -1,0 +1,7 @@
+[
+  { "id": "a1", "name": "Milk", "qty": 2, "category": "dairy", "done": false, "addedAt": "2024-11-02T09:15:00Z" },
+  { "id": "a2", "name": "Eggs", "qty": 12, "category": "dairy", "done": true, "addedAt": "2024-11-02T09:16:00Z" },
+  { "id": "a3", "name": "Bread", "qty": 1, "category": "bakery", "done": false, "addedAt": "2024-11-03T18:40:00Z" },
+  { "id": "a4", "name": "Apples", "qty": 6, "category": "produce", "done": false, "addedAt": "2024-11-04T08:00:00Z" },
+  { "id": "a5", "name": "Coffee", "qty": 1, "category": "pantry", "done": false, "addedAt": "2024-11-05T07:30:00Z" }
+]

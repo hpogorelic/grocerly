@@ -1,0 +1,8 @@
+body { font-family: Arial, sans-serif; margin: 2rem; background: #fafafa; }
+.app { max-width: 640px; margin: 0 auto; }
+.item { display: flex; gap: .5rem; padding: .4rem 0; border-bottom: 1px solid #ddd; }
+.item.done { color: #999; text-decoration: line-through; }
+.item.highlight { background: #fff3b0; }
+.toolbar { display: flex; gap: .5rem; margin: 1rem 0; }
+.stats { font-size: .9rem; color: #555; }
+.hidden { display: none; }
