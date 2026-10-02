@@ -5,7 +5,6 @@ import { SEED_URL, STORAGE_KEY, DEBUG } from './config'
 import { deepClone, findDuplicates, categories } from './utils/helpers'
 import { applyFilter, countByFilter } from './utils/filters'
 import ItemList from './components/ItemList'
-import ArchivedList from './components/ArchivedList'
 import AddItemForm from './components/AddItemForm'
 import Stats from './components/Stats'
 import SavedLabel from './components/SavedLabel'
@@ -167,7 +166,7 @@ function App() {
       {dupes.length > 0 && <div className="stats">Duplicates: {dupes.join(', ')}</div>}
       <Stats items={items} open={openCount} done={doneCount} />
       <ItemList items={visible} highlightedId={highlightedId} onToggle={handleToggle} onRemove={handleRemove} />
-      {showArchived && <ArchivedList items={items} onToggle={handleToggle} onRemove={handleRemove} />}
+      {showArchived && <ItemList items={items.filter(function (i) { return i.done })} idPrefix="arch-" emptyText="Nothing archived." onToggle={handleToggle} onRemove={handleRemove} />}
       <SavedLabel lastSaved={lastSaved} />
     </div>
   )

@@ -5,12 +5,14 @@ import { capitalize } from '../utils/helpers'
 
 export default function ItemList(props) {
   var items = props.items || []
-  if (items.length === 0) return <p>Nothing to buy.</p>
+  var idPrefix = props.idPrefix || 'item-'
+  var emptyText = props.emptyText || 'Nothing to buy.'
+  if (items.length === 0) return <p>{emptyText}</p>
   return (
     <ul>
       {items.map(function (item) {
         return (
-          <li key={item.id} id={'item-' + item.id} className={classNames('item', { done: item.done, highlight: item.id === props.highlightedId })}>
+          <li key={item.id} id={idPrefix + item.id} className={classNames('item', { done: item.done, highlight: item.id === props.highlightedId })}>
             <input type="checkbox" checked={item.done} onChange={function () { props.onToggle(item.id) }} />
             <span>{capitalize(item.name)}</span>
             <span>{formatQty(item.qty)}</span>

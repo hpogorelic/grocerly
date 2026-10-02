@@ -33,3 +33,16 @@ test('toggle and remove call back with the item id', () => {
   expect(onToggle).toHaveBeenCalledWith('1')
   expect(onRemove).toHaveBeenCalledWith('1')
 })
+
+test('idPrefix changes the row id prefix', () => {
+  const { container } = render(<ItemList items={[items[1]]} idPrefix="arch-" onToggle={() => {}} onRemove={() => {}} />)
+  expect(container.querySelector('#arch-2')).not.toBeNull()
+  expect(container.querySelector('#item-2')).toBeNull()
+})
+
+test('emptyText replaces the default placeholder', () => {
+  const { rerender } = render(<ItemList items={[]} emptyText="Nothing archived." />)
+  expect(screen.getByText('Nothing archived.')).toBeInTheDocument()
+  rerender(<ItemList emptyText="Nothing archived." />)
+  expect(screen.getByText('Nothing archived.')).toBeInTheDocument()
+})
