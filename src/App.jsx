@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import axios from 'axios'
 import _ from 'lodash'
 import $ from 'jquery'
@@ -12,193 +12,173 @@ import ArchivedList from './components/ArchivedList'
 import AddItemForm from './components/AddItemForm'
 import Stats from './components/Stats'
 
-class App extends React.Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-      items: [],
-      loading: true,
-      error: null,
-      filter: 'all',
-      filterArg: null,
-      search: '',
-      sortBy: 'addedAt',
-      sortDir: 'desc',
-      showArchived: false,
-      lastSaved: null,
-      tick: 0
-    }
-    this.handleAdd = this.handleAdd.bind(this)
-    this.handleToggle = this.handleToggle.bind(this)
-    this.handleRemove = this.handleRemove.bind(this)
-    this.handleSearch = this.handleSearch.bind(this)
-    this.handleFilter = this.handleFilter.bind(this)
-    this.handleSort = this.handleSort.bind(this)
-    this.handleClearDone = this.handleClearDone.bind(this)
-    this.handleBusAdd = this.handleBusAdd.bind(this)
-    this.toggleArchived = this.toggleArchived.bind(this)
-  }
+const NO_ITEMS = []
 
-  componentDidMount() {
-    var self = this
-    var stored = null
-    try {
-      stored = JSON.parse(localStorage.getItem(STORAGE_KEY))
-    } catch (e) {
-      stored = null
-    }
-    if (stored && stored.length) {
-      self.setState({ items: stored, loading: false })
-    } else {
-      axios.get(SEED_URL).then(function (res) {
-        self.setState({ items: res.data, loading: false })
-      }).catch(function (err) {
-        self.setState({ error: err.message, loading: false })
-      })
-    }
-    on('item:add', this.handleBusAdd)
-    this.timer = setInterval(function () {
-      self.setState({ tick: self.state.tick + 1 })
-    }, 1000)
-  }
+function App() {
+  const [items, setItems] = useState(NO_ITEMS)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [filter, setFilter] = useState('all')
+  const [filterArg, setFilterArg] = useState(null)
+  const [search, setSearch] = useState('')
+  const [sortBy, setSortBy] = useState('addedAt')
+  const [sortDir, setSortDir] = useState('desc')
+  const [showArchived, setShowArchived] = useState(false)
+  const [lastSaved, setLastSaved] = useState(null)
+  const [, setTick] = useState(0)
+  const savedItems = useRef(NO_ITEMS)
 
-  componentWillUnmount() {
-    off('item:add', this.handleBusAdd)
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.items !== this.state.items) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state.items))
-      this.setState({ lastSaved: new Date().toISOString() })
-      if (DEBUG) console.log('saved', this.state.items.length, 'items')
-    }
-  }
-
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    // nothing here yet
-  }
-
-  handleBusAdd(item) {
-    this.handleAdd(item.name, item.qty, item.category)
-  }
-
-  handleAdd(name, qty, category) {
-    var items = deepClone(this.state.items)
-    var id = 'i' + crypto.randomUUID()
-    items.push({
+  const handleAdd = useCallback(function (name, qty, category) {
+    const id = 'i' + crypto.randomUUID()
+    const item = {
       id: id,
       name: name,
       qty: parseInt(qty, 10) || 1,
       category: category || 'other',
       done: false,
       addedAt: new Date().toISOString()
+    }
+    setItems(function (current) {
+      const next = deepClone(current)
+      next.push(item)
+      return next
     })
-    this.setState({ items: items })
     emit('item:added', id)
     setTimeout(function () {
       $('#item-' + id).addClass('highlight')
       setTimeout(function () { $('#item-' + id).removeClass('highlight') }, 800)
     }, 0)
-  }
+  }, [])
 
-  handleToggle(id) {
-    var items = deepClone(this.state.items)
-    for (var i = 0; i < items.length; i++) {
-      if (items[i].id === id) items[i].done = !items[i].done
+  // load from storage, or from the seed when storage is empty
+  useEffect(function () {
+    let cancelled = false
+    let stored = null
+    try {
+      stored = JSON.parse(localStorage.getItem(STORAGE_KEY))
+    } catch (e) {
+      stored = null
     }
-    this.setState({ items: items })
-  }
-
-  handleRemove(id) {
-    var items = deepClone(this.state.items)
-    var out = []
-    for (var i = 0; i < items.length; i++) {
-      if (items[i].id !== id) out.push(items[i])
-    }
-    this.setState({ items: out })
-  }
-
-  handleClearDone() {
-    var items = deepClone(this.state.items)
-    var out = []
-    for (var i = 0; i < items.length; i++) {
-      if (!items[i].done) out.push(items[i])
-    }
-    this.setState({ items: out })
-  }
-
-  handleSearch(e) {
-    this.setState({ search: e.target.value })
-  }
-
-  handleFilter(type, arg) {
-    this.setState({ filter: type, filterArg: arg || null })
-  }
-
-  handleSort(by) {
-    if (this.state.sortBy === by) {
-      this.setState({ sortDir: this.state.sortDir === 'asc' ? 'desc' : 'asc' })
+    if (stored && stored.length) {
+      setItems(stored)
+      setLoading(false)
     } else {
-      this.setState({ sortBy: by, sortDir: 'asc' })
+      axios.get(SEED_URL).then(function (res) {
+        if (cancelled) return
+        setItems(res.data)
+        setLoading(false)
+      }).catch(function (err) {
+        if (cancelled) return
+        setError(err.message)
+        setLoading(false)
+      })
+    }
+    return function () { cancelled = true }
+  }, [])
+
+  // bus subscription and the one-second tick that refreshes the "Saved" line
+  useEffect(function () {
+    function handleBusAdd(item) {
+      handleAdd(item.name, item.qty, item.category)
+    }
+    on('item:add', handleBusAdd)
+    const timer = setInterval(function () {
+      setTick(function (t) { return t + 1 })
+    }, 1000)
+    return function () {
+      off('item:add', handleBusAdd)
+      clearInterval(timer)
+    }
+  }, [handleAdd])
+
+  // persist whenever the items change (not for the initial empty list)
+  useEffect(function () {
+    if (items === savedItems.current) return
+    savedItems.current = items
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
+    setLastSaved(new Date().toISOString())
+    if (DEBUG) console.log('saved', items.length, 'items')
+  }, [items])
+
+  const visible = useMemo(function () {
+    let list = applyFilter(items, filter, filterArg)
+    if (search) {
+      list = applyFilter(list, 'search', search)
+    }
+    list = _.sortBy(list, function (i) { return i[sortBy] })
+    if (sortDir === 'desc') list = list.reverse()
+    return list
+  }, [items, filter, filterArg, search, sortBy, sortDir])
+
+  function handleToggle(id) {
+    const next = deepClone(items)
+    for (let i = 0; i < next.length; i++) {
+      if (next[i].id === id) next[i].done = !next[i].done
+    }
+    setItems(next)
+  }
+
+  function handleRemove(id) {
+    setItems(deepClone(items).filter(function (i) { return i.id !== id }))
+  }
+
+  function handleClearDone() {
+    setItems(deepClone(items).filter(function (i) { return !i.done }))
+  }
+
+  function handleSearch(e) {
+    setSearch(e.target.value)
+  }
+
+  function handleFilter(type, arg) {
+    setFilter(type)
+    setFilterArg(arg || null)
+  }
+
+  function handleSort(by) {
+    if (sortBy === by) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortBy(by)
+      setSortDir('asc')
     }
   }
 
-  toggleArchived() {
-    this.setState({ showArchived: !this.state.showArchived })
-  }
+  if (loading) return <div className="app">Loading…</div>
+  if (error) return <div className="app">Error: {error}</div>
 
-  getVisibleItems() {
-    var items = this.state.items
-    items = applyFilter(items, this.state.filter, this.state.filterArg)
-    if (this.state.search) {
-      items = applyFilter(items, 'search', this.state.search)
-    }
-    var by = this.state.sortBy
-    var dir = this.state.sortDir
-    items = _.sortBy(items, function (i) { return i[by] })
-    if (dir === 'desc') items = items.reverse()
-    return items
-  }
+  const dupes = findDuplicates(items)
+  const cats = categories(items)
+  const openCount = countByFilter(items, 'open')
+  const doneCount = countByFilter(items, 'done')
 
-  render() {
-    var self = this
-    if (this.state.loading) return <div className="app">Loading…</div>
-    if (this.state.error) return <div className="app">Error: {this.state.error}</div>
-
-    var visible = this.getVisibleItems()
-    var dupes = findDuplicates(this.state.items)
-    var cats = categories(this.state.items)
-    var openCount = countByFilter(this.state.items, 'open')
-    var doneCount = countByFilter(this.state.items, 'done')
-
-    return (
-      <div className="app">
-        <h1>Grocerly</h1>
-        <AddItemForm onAdd={this.handleAdd} categories={cats} />
-        <div className="toolbar">
-          <input placeholder="search" value={this.state.search} onChange={this.handleSearch} />
-          <button onClick={function () { self.handleFilter('all') }}>All</button>
-          <button onClick={function () { self.handleFilter('open') }}>Open</button>
-          <button onClick={function () { self.handleFilter('done') }}>Done</button>
-          <button onClick={function () { self.handleFilter('big') }}>Big</button>
-          {cats.map(function (c) {
-            return <button key={c} onClick={function () { self.handleFilter('category', c) }}>{c}</button>
-          })}
-          <button onClick={function () { self.handleSort('name') }}>Sort by name</button>
-          <button onClick={function () { self.handleSort('addedAt') }}>Sort by date</button>
-          <button onClick={this.handleClearDone}>Clear done</button>
-          <button onClick={this.toggleArchived}>{this.state.showArchived ? 'Hide' : 'Show'} archived</button>
-        </div>
-        {dupes.length > 0 && <div className="stats">Duplicates: {dupes.join(', ')}</div>}
-        <Stats items={this.state.items} open={openCount} done={doneCount} />
-        <ItemList items={visible} onToggle={this.handleToggle} onRemove={this.handleRemove} sortBy={this.state.sortBy} sortDir={this.state.sortDir} search={this.state.search} filter={this.state.filter} />
-        {this.state.showArchived && <ArchivedList items={this.state.items} onToggle={this.handleToggle} onRemove={this.handleRemove} sortBy={this.state.sortBy} sortDir={this.state.sortDir} />}
-        <div className="stats">
-          {this.state.lastSaved ? 'Saved ' + relative(this.state.lastSaved) + ' (' + formatDate(this.state.lastSaved) + ')' : 'Not saved yet'}
-        </div>
+  return (
+    <div className="app">
+      <h1>Grocerly</h1>
+      <AddItemForm onAdd={handleAdd} categories={cats} />
+      <div className="toolbar">
+        <input placeholder="search" value={search} onChange={handleSearch} />
+        <button onClick={function () { handleFilter('all') }}>All</button>
+        <button onClick={function () { handleFilter('open') }}>Open</button>
+        <button onClick={function () { handleFilter('done') }}>Done</button>
+        <button onClick={function () { handleFilter('big') }}>Big</button>
+        {cats.map(function (c) {
+          return <button key={c} onClick={function () { handleFilter('category', c) }}>{c}</button>
+        })}
+        <button onClick={function () { handleSort('name') }}>Sort by name</button>
+        <button onClick={function () { handleSort('addedAt') }}>Sort by date</button>
+        <button onClick={handleClearDone}>Clear done</button>
+        <button onClick={function () { setShowArchived(!showArchived) }}>{showArchived ? 'Hide' : 'Show'} archived</button>
       </div>
-    )
-  }
+      {dupes.length > 0 && <div className="stats">Duplicates: {dupes.join(', ')}</div>}
+      <Stats items={items} open={openCount} done={doneCount} />
+      <ItemList items={visible} onToggle={handleToggle} onRemove={handleRemove} />
+      {showArchived && <ArchivedList items={items} onToggle={handleToggle} onRemove={handleRemove} />}
+      <div className="stats">
+        {lastSaved ? 'Saved ' + relative(lastSaved) + ' (' + formatDate(lastSaved) + ')' : 'Not saved yet'}
+      </div>
+    </div>
+  )
 }
 
 export default App
