@@ -1,14 +1,17 @@
-import React from 'react'
-import ReactDOM from 'react-dom'
+import React, { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
 import App from './App'
 
-vi.mock('react-dom', () => ({ default: { render: vi.fn() } }))
+const render = vi.fn()
+vi.mock('react-dom/client', () => ({ createRoot: vi.fn(() => ({ render })) }))
 
-test('main.jsx renders <App /> into #root', async () => {
+test('main.jsx creates a root on #root and renders <App /> inside StrictMode', async () => {
   document.body.innerHTML = '<div id="root"></div>'
   await import('./main')
-  expect(ReactDOM.render).toHaveBeenCalledTimes(1)
-  const [element, container] = ReactDOM.render.mock.calls[0]
-  expect(element.type).toBe(App)
-  expect(container).toBe(document.getElementById('root'))
+  expect(createRoot).toHaveBeenCalledTimes(1)
+  expect(createRoot.mock.calls[0][0]).toBe(document.getElementById('root'))
+  expect(render).toHaveBeenCalledTimes(1)
+  const [element] = render.mock.calls[0]
+  expect(element.type).toBe(StrictMode)
+  expect(element.props.children.type).toBe(App)
 })
