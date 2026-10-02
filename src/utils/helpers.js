@@ -1,5 +1,4 @@
 import moment from 'moment'
-import _ from 'lodash'
 
 export function deepClone(obj) {
   return JSON.parse(JSON.stringify(obj))
@@ -14,7 +13,7 @@ export function relative(iso) {
 }
 
 export function categories(items) {
-  return _.uniq(_.map(items, function (i) { return i.category }))
+  return [...new Set(items.map(function (i) { return i.category }))]
 }
 
 export function findDuplicates(items) {

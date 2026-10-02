@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import axios from 'axios'
-import _ from 'lodash'
 import { SEED_URL, STORAGE_KEY, DEBUG } from './config'
 import { deepClone, findDuplicates, categories } from './utils/helpers'
 import { applyFilter, countByFilter } from './utils/filters'
@@ -98,7 +97,7 @@ function App() {
     if (search) {
       list = applyFilter(list, 'search', search)
     }
-    list = _.sortBy(list, function (i) { return i[sortBy] })
+    list = [...list].sort(function (a, b) { return a[sortBy] < b[sortBy] ? -1 : a[sortBy] > b[sortBy] ? 1 : 0 })
     if (sortDir === 'desc') list = list.reverse()
     return list
   }, [items, filter, filterArg, search, sortBy, sortDir])
