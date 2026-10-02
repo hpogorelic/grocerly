@@ -5,7 +5,6 @@ import $ from 'jquery'
 import { SEED_URL, STORAGE_KEY, DEBUG } from './config'
 import { deepClone, findDuplicates, categories } from './utils/helpers'
 import { applyFilter, countByFilter } from './utils/filters'
-import { on, off, emit } from './utils/bus'
 import ItemList from './components/ItemList'
 import ArchivedList from './components/ArchivedList'
 import AddItemForm from './components/AddItemForm'
@@ -42,7 +41,6 @@ function App() {
       next.push(item)
       return next
     })
-    emit('item:added', id)
     setTimeout(function () {
       $('#item-' + id).addClass('highlight')
       setTimeout(function () { $('#item-' + id).removeClass('highlight') }, 800)
@@ -74,17 +72,6 @@ function App() {
     }
     return function () { cancelled = true }
   }, [])
-
-  // bus subscription
-  useEffect(function () {
-    function handleBusAdd(item) {
-      handleAdd(item.name, item.qty, item.category)
-    }
-    on('item:add', handleBusAdd)
-    return function () {
-      off('item:add', handleBusAdd)
-    }
-  }, [handleAdd])
 
   // persist whenever the items change (not for the initial empty list)
   useEffect(function () {

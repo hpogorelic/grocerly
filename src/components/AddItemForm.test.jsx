@@ -1,7 +1,6 @@
 import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import AddItemForm from './AddItemForm'
-import { on, off } from '../utils/bus'
 
 test('submitting with an empty name does not call onAdd and marks the name input red', () => {
   const onAdd = vi.fn()
@@ -11,17 +10,13 @@ test('submitting with an empty name does not call onAdd and marks the name input
   expect(screen.getByPlaceholderText('item').style.borderColor).toBe('red')
 })
 
-test('submitting with a name calls onAdd, emits form:submitted and resets the fields', () => {
+test('submitting with a name calls onAdd and resets the fields', () => {
   const onAdd = vi.fn()
-  const seen = vi.fn()
-  on('form:submitted', seen)
   const { container } = render(<AddItemForm onAdd={onAdd} />)
   fireEvent.change(screen.getByPlaceholderText('item'), { target: { value: 'milk' } })
   fireEvent.change(screen.getByPlaceholderText('category'), { target: { value: 'dairy' } })
   fireEvent.submit(container.querySelector('form'))
-  off('form:submitted', seen)
   expect(onAdd).toHaveBeenCalledWith('milk', 1, 'dairy')
-  expect(seen).toHaveBeenCalledWith({ name: 'milk' })
   expect(screen.getByPlaceholderText('item').value).toBe('')
   expect(screen.getByPlaceholderText('category').value).toBe('')
 })

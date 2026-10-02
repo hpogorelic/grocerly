@@ -2,7 +2,6 @@ import React from 'react'
 import { render, screen, within, fireEvent, act, cleanup } from '@testing-library/react'
 import axios from 'axios'
 import App from './App'
-import { emit } from './utils/bus'
 
 vi.mock('axios', () => ({ default: { get: vi.fn() } }))
 
@@ -195,13 +194,6 @@ describe('add, toggle, remove, clear done', () => {
     expect(screen.queryByText(/Duplicates:/)).not.toBeInTheDocument()
     addItem('milk')
     expect(screen.getByText('Duplicates: Milk, milk')).toBeInTheDocument()
-  })
-
-  test('an item:add bus event adds an item', () => {
-    act(() => { emit('item:add', { name: 'rice', qty: '2', category: 'pantry' }) })
-    const row = rowFor('Rice')
-    expect(within(row).getByText('2x')).toBeInTheDocument()
-    expect(within(row).getByText('pantry')).toBeInTheDocument()
   })
 
   test('toggling an item marks it done and updates the counts and storage', () => {

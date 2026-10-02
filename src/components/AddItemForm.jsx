@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
 import $ from 'jquery'
-import { emit } from '../utils/bus'
 
 export default function AddItemForm(props) {
   const [name, setName] = useState('')
@@ -20,7 +19,6 @@ export default function AddItemForm(props) {
       return
     }
     props.onAdd(name, qty, category)
-    emit('form:submitted', { name: name })
     setName('')
     setQty(1)
     setCategory('')
