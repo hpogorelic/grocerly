@@ -4,10 +4,6 @@ export function deepClone(obj) {
   return JSON.parse(JSON.stringify(obj))
 }
 
-export function formatDate(iso) {
-  return moment(iso).format('DD.MM.YYYY HH:mm')
-}
-
 export function relative(iso) {
   return moment(iso).fromNow()
 }

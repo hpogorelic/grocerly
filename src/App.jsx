@@ -174,4 +174,3 @@ function App() {
 }
 
 export default App
-// hotfix: highlight new item

@@ -1,6 +1,5 @@
 import moment from 'moment'
 
-// same as helpers.formatDate, copied here because of an import cycle at some point
 export function formatDate(iso) {
   return moment(iso).format('DD.MM.YYYY HH:mm')
 }
