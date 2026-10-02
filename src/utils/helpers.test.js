@@ -1,4 +1,4 @@
-import { findDuplicates, categories, capitalize, deepClone } from './helpers'
+import { findDuplicates, categories, capitalize } from './helpers'
 
 test('findDuplicates matches names case-insensitively and reports each first-seen spelling', () => {
   const items = [{ name: 'Milk' }, { name: 'milk' }, { name: 'Eggs' }]
@@ -28,11 +28,4 @@ test('capitalize upper-cases the first letter and tolerates empty input', () => 
   expect(capitalize('milk')).toBe('Milk')
   expect(capitalize('')).toBe('')
   expect(capitalize(undefined)).toBe('')
-})
-
-test('deepClone returns an independent copy', () => {
-  const src = { a: { b: 1 } }
-  const copy = deepClone(src)
-  copy.a.b = 2
-  expect(src.a.b).toBe(1)
 })

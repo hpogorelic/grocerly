@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { SEED_URL, STORAGE_KEY, DEBUG } from './config'
-import { deepClone, findDuplicates, categories } from './utils/helpers'
+import { findDuplicates, categories } from './utils/helpers'
 import { applyFilter, countByFilter } from './utils/filters'
 import ItemList from './components/ItemList'
 import AddItemForm from './components/AddItemForm'
@@ -19,7 +19,6 @@ function App() {
   const [sortBy, setSortBy] = useState('addedAt')
   const [sortDir, setSortDir] = useState('desc')
   const [showArchived, setShowArchived] = useState(false)
-  const [lastSaved, setLastSaved] = useState(null)
   const [highlightedId, setHighlightedId] = useState(null)
   const savedItems = useRef(NO_ITEMS)
   const highlightTimers = useRef([])
@@ -43,9 +42,7 @@ function App() {
       addedAt: new Date().toISOString()
     }
     setItems(function (current) {
-      const next = deepClone(current)
-      next.push(item)
-      return next
+      return [...current, item]
     })
     const timers = highlightTimers.current
     timers.push(setTimeout(function () {
@@ -90,8 +87,12 @@ function App() {
     if (items === savedItems.current) return
     savedItems.current = items
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
-    setLastSaved(new Date().toISOString())
     if (DEBUG) console.log('saved', items.length, 'items')
+  }, [items])
+
+  // the save time follows the items in the same render (null until the first load)
+  const lastSaved = useMemo(function () {
+    return items === NO_ITEMS ? null : new Date().toISOString()
   }, [items])
 
   const visible = useMemo(function () {
@@ -105,19 +106,23 @@ function App() {
   }, [items, filter, filterArg, search, sortBy, sortDir])
 
   function handleToggle(id) {
-    const next = deepClone(items)
-    for (let i = 0; i < next.length; i++) {
-      if (next[i].id === id) next[i].done = !next[i].done
-    }
-    setItems(next)
+    setItems(function (current) {
+      return current.map(function (i) {
+        return i.id === id ? { ...i, done: !i.done } : i
+      })
+    })
   }
 
   function handleRemove(id) {
-    setItems(deepClone(items).filter(function (i) { return i.id !== id }))
+    setItems(function (current) {
+      return current.filter(function (i) { return i.id !== id })
+    })
   }
 
   function handleClearDone() {
-    setItems(deepClone(items).filter(function (i) { return !i.done }))
+    setItems(function (current) {
+      return current.filter(function (i) { return !i.done })
+    })
   }
 
   function handleSearch(e) {

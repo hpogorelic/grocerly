@@ -10,10 +10,6 @@ function relativeText(value, unit) {
   return relativeFormatter.format(value, unit)
 }
 
-export function deepClone(obj) {
-  return JSON.parse(JSON.stringify(obj))
-}
-
 // thresholds follow moment's fromNow()
 export function relative(iso) {
   const diff = (new Date(iso).getTime() - Date.now()) / 1000
