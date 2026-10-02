@@ -40,5 +40,11 @@ test('renders category suggestions in the datalist', () => {
   expect(values).toEqual(['dairy', 'bakery'])
 })
 
-// Waiting for g5 (render the preview as text): typed HTML must appear as text, not be parsed.
-test.todo('preview shows typed HTML as text instead of rendering it')
+test('preview shows typed HTML as text instead of rendering it', () => {
+  const { container } = render(<AddItemForm onAdd={() => {}} />)
+  const html = '<img src=x onerror=alert(1)>'
+  fireEvent.change(screen.getByPlaceholderText('item'), { target: { value: html } })
+  const preview = container.querySelector('.preview')
+  expect(preview.querySelector('img')).toBeNull()
+  expect(preview.textContent).toBe(html + ' × 1')
+})

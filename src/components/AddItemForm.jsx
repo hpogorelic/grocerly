@@ -6,12 +6,7 @@ export default function AddItemForm(props) {
   const [name, setName] = useState('')
   const [qty, setQty] = useState(1)
   const [category, setCategory] = useState('')
-  const [preview, setPreview] = useState('')
   const formRef = useRef(null)
-
-  useEffect(() => {
-    setPreview('<b>' + name + '</b> × ' + qty + (category ? ' (' + category + ')' : ''))
-  })
 
   useEffect(() => {
     $(formRef.current).find('input').first().focus()
@@ -40,7 +35,7 @@ export default function AddItemForm(props) {
         {(props.categories || []).map((c) => <option key={c} value={c} />)}
       </datalist>
       <button type="submit">Add</button>
-      <div className="preview" dangerouslySetInnerHTML={{ __html: preview }} />
+      <div className="preview"><b>{name}</b> × {qty}{category ? ` (${category})` : ''}</div>
     </form>
   )
 }
