@@ -1,9 +1,8 @@
 import React from 'react'
 import { render, screen, within, fireEvent, act, cleanup } from '@testing-library/react'
-import axios from 'axios'
 import App from './App'
 
-vi.mock('axios', () => ({ default: { get: vi.fn() } }))
+const fetchMock = vi.fn()
 
 const KEY = 'grocerly-items'
 
@@ -55,7 +54,8 @@ function stored() {
 
 beforeEach(() => {
   localStorage.clear()
-  axios.get.mockReset()
+  fetchMock.mockReset()
+  vi.stubGlobal('fetch', fetchMock)
   vi.useFakeTimers()
 })
 
@@ -63,6 +63,7 @@ afterEach(() => {
   cleanup()
   vi.clearAllTimers()
   vi.useRealTimers()
+  vi.unstubAllGlobals()
 })
 
 test('renders the heading', async () => {
@@ -75,10 +76,10 @@ test('renders the heading', async () => {
 })
 
 describe('loading and persistence', () => {
-  test('renders items stored in localStorage without calling axios', () => {
+  test('renders items stored in localStorage without calling fetch', () => {
     seedStorage(FIXTURE)
     renderApp()
-    expect(axios.get).not.toHaveBeenCalled()
+    expect(fetchMock).not.toHaveBeenCalled()
     expect(names()).toEqual(['Bread', 'Eggs', 'Milk', 'Apples'])
     expect(screen.getByText('4 items, 3 open, 1 done (25%)')).toBeInTheDocument()
   })
@@ -98,19 +99,19 @@ describe('loading and persistence', () => {
     expect(screen.getByText(/^Saved a minute ago/)).toBeInTheDocument()
   })
 
-  test('shows Loading… then the seed items when storage is empty and axios succeeds', async () => {
-    axios.get.mockResolvedValue({ data: FIXTURE })
+  test('shows Loading… then the seed items when storage is empty and fetch succeeds', async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve(FIXTURE) })
     renderApp()
     expect(screen.getByText('Loading…')).toBeInTheDocument()
-    expect(axios.get).toHaveBeenCalledWith('/seed.json')
+    expect(fetchMock).toHaveBeenCalledWith('/seed.json')
     await flush()
     expect(screen.queryByText('Loading…')).not.toBeInTheDocument()
     expect(names()).toEqual(['Bread', 'Eggs', 'Milk', 'Apples'])
     expect(stored()).toEqual(FIXTURE)
   })
 
-  test('shows the error message when storage is empty and axios fails', async () => {
-    axios.get.mockRejectedValue(new Error('Network Error'))
+  test('shows the error message when storage is empty and fetch fails', async () => {
+    fetchMock.mockRejectedValue(new Error('Network Error'))
     renderApp()
     await flush()
     expect(screen.getByText('Error: Network Error')).toBeInTheDocument()
@@ -118,21 +119,29 @@ describe('loading and persistence', () => {
     expect(localStorage.getItem(KEY)).toBeNull()
   })
 
-  test('falls back to the seed when storage holds an empty list', async () => {
-    seedStorage([])
-    axios.get.mockResolvedValue({ data: FIXTURE })
+  test('shows the status text as the error when the seed response is not ok', async () => {
+    fetchMock.mockResolvedValue({ ok: false, statusText: 'Not Found', json: () => Promise.resolve([]) })
     renderApp()
     await flush()
-    expect(axios.get).toHaveBeenCalledTimes(1)
+    expect(screen.getByText('Error: Not Found')).toBeInTheDocument()
+    expect(localStorage.getItem(KEY)).toBeNull()
+  })
+
+  test('falls back to the seed when storage holds an empty list', async () => {
+    seedStorage([])
+    fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve(FIXTURE) })
+    renderApp()
+    await flush()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(names()).toHaveLength(4)
   })
 
   test('falls back to the seed when storage holds invalid JSON', async () => {
     localStorage.setItem(KEY, '{not json')
-    axios.get.mockResolvedValue({ data: FIXTURE })
+    fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve(FIXTURE) })
     renderApp()
     await flush()
-    expect(axios.get).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(names()).toHaveLength(4)
   })
 
@@ -142,7 +151,7 @@ describe('loading and persistence', () => {
     addItem('bananas')
     cleanup()
     renderApp()
-    expect(axios.get).not.toHaveBeenCalled()
+    expect(fetchMock).not.toHaveBeenCalled()
     expect(screen.getByText('Bananas')).toBeInTheDocument()
     expect(names()).toHaveLength(5)
   })

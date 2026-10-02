@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import axios from 'axios'
 import { SEED_URL, STORAGE_KEY, DEBUG } from './config'
 import { deepClone, findDuplicates, categories } from './utils/helpers'
 import { applyFilter, countByFilter } from './utils/filters'
@@ -70,9 +69,12 @@ function App() {
       setItems(stored)
       setLoading(false)
     } else {
-      axios.get(SEED_URL).then(function (res) {
+      fetch(SEED_URL).then(function (r) {
+        if (!r.ok) throw new Error(r.statusText)
+        return r.json()
+      }).then(function (data) {
         if (cancelled) return
-        setItems(res.data)
+        setItems(data)
         setLoading(false)
       }).catch(function (err) {
         if (cancelled) return
