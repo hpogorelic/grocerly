@@ -1,23 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react'
-import $ from 'jquery'
+import classNames from 'classnames'
 
 export default function AddItemForm(props) {
   const [name, setName] = useState('')
   const [qty, setQty] = useState(1)
   const [category, setCategory] = useState('')
-  const formRef = useRef(null)
+  const [error, setError] = useState(false)
+  const nameRef = useRef(null)
 
   useEffect(() => {
-    $(formRef.current).find('input').first().focus()
-    $(formRef.current).hide().fadeIn(300)
+    nameRef.current.focus()
   }, [])
 
   function submit(e) {
     e.preventDefault()
     if (!name) {
-      $(formRef.current).find('input').first().css('border-color', 'red')
+      setError(true)
       return
     }
+    setError(false)
     props.onAdd(name, qty, category)
     setName('')
     setQty(1)
@@ -25,8 +26,8 @@ export default function AddItemForm(props) {
   }
 
   return (
-    <form ref={formRef} onSubmit={submit} className="add-form">
-      <input placeholder="item" value={name} onChange={(e) => setName(e.target.value)} />
+    <form onSubmit={submit} className="add-form">
+      <input ref={nameRef} className={classNames({ invalid: error })} placeholder="item" value={name} onChange={(e) => setName(e.target.value)} />
       <input type="number" min="1" value={qty} onChange={(e) => setQty(e.target.value)} />
       <input placeholder="category" value={category} list="cats" onChange={(e) => setCategory(e.target.value)} />
       <datalist id="cats">

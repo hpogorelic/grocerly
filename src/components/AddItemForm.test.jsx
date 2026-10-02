@@ -2,12 +2,12 @@ import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import AddItemForm from './AddItemForm'
 
-test('submitting with an empty name does not call onAdd and marks the name input red', () => {
+test('submitting with an empty name does not call onAdd and marks the name input invalid', () => {
   const onAdd = vi.fn()
   const { container } = render(<AddItemForm onAdd={onAdd} />)
   fireEvent.submit(container.querySelector('form'))
   expect(onAdd).not.toHaveBeenCalled()
-  expect(screen.getByPlaceholderText('item').style.borderColor).toBe('red')
+  expect(screen.getByPlaceholderText('item')).toHaveClass('invalid')
 })
 
 test('submitting with a name calls onAdd and resets the fields', () => {

@@ -10,7 +10,7 @@ export default function ItemList(props) {
     <ul>
       {items.map(function (item) {
         return (
-          <li key={item.id} id={'item-' + item.id} className={classNames('item', { done: item.done })}>
+          <li key={item.id} id={'item-' + item.id} className={classNames('item', { done: item.done, highlight: item.id === props.highlightedId })}>
             <input type="checkbox" checked={item.done} onChange={function () { props.onToggle(item.id) }} />
             <span>{capitalize(item.name)}</span>
             <span>{formatQty(item.qty)}</span>

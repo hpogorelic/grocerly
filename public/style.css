@@ -6,3 +6,6 @@ body { font-family: Arial, sans-serif; margin: 2rem; background: #fafafa; }
 .toolbar { display: flex; gap: .5rem; margin: 1rem 0; }
 .stats { font-size: .9rem; color: #555; }
 .hidden { display: none; }
+.add-form { animation: fade-in 300ms ease-in; }
+.add-form input.invalid { border-color: red; }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }

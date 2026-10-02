@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import axios from 'axios'
 import _ from 'lodash'
-import $ from 'jquery'
 import { SEED_URL, STORAGE_KEY, DEBUG } from './config'
 import { deepClone, findDuplicates, categories } from './utils/helpers'
 import { applyFilter, countByFilter } from './utils/filters'
@@ -24,7 +23,17 @@ function App() {
   const [sortDir, setSortDir] = useState('desc')
   const [showArchived, setShowArchived] = useState(false)
   const [lastSaved, setLastSaved] = useState(null)
+  const [highlightedId, setHighlightedId] = useState(null)
   const savedItems = useRef(NO_ITEMS)
+  const highlightTimers = useRef([])
+
+  // cancel any pending highlight timeouts on unmount
+  useEffect(function () {
+    const timers = highlightTimers.current
+    return function () {
+      timers.forEach(clearTimeout)
+    }
+  }, [])
 
   const handleAdd = useCallback(function (name, qty, category) {
     const id = 'i' + crypto.randomUUID()
@@ -41,10 +50,13 @@ function App() {
       next.push(item)
       return next
     })
-    setTimeout(function () {
-      $('#item-' + id).addClass('highlight')
-      setTimeout(function () { $('#item-' + id).removeClass('highlight') }, 800)
-    }, 0)
+    const timers = highlightTimers.current
+    timers.push(setTimeout(function () {
+      setHighlightedId(id)
+      timers.push(setTimeout(function () {
+        setHighlightedId(function (current) { return current === id ? null : current })
+      }, 800))
+    }, 0))
   }, [])
 
   // load from storage, or from the seed when storage is empty
@@ -154,7 +166,7 @@ function App() {
       </div>
       {dupes.length > 0 && <div className="stats">Duplicates: {dupes.join(', ')}</div>}
       <Stats items={items} open={openCount} done={doneCount} />
-      <ItemList items={visible} onToggle={handleToggle} onRemove={handleRemove} />
+      <ItemList items={visible} highlightedId={highlightedId} onToggle={handleToggle} onRemove={handleRemove} />
       {showArchived && <ArchivedList items={items} onToggle={handleToggle} onRemove={handleRemove} />}
       <SavedLabel lastSaved={lastSaved} />
     </div>
