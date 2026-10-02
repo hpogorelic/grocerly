@@ -84,7 +84,7 @@ class App extends React.Component {
 
   handleAdd(name, qty, category) {
     var items = deepClone(this.state.items)
-    var id = 'i' + Math.floor(Math.random() * 1000000)
+    var id = 'i' + crypto.randomUUID()
     items.push({
       id: id,
       name: name,
