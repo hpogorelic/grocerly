@@ -3,14 +3,14 @@ import axios from 'axios'
 import _ from 'lodash'
 import $ from 'jquery'
 import { SEED_URL, STORAGE_KEY, DEBUG } from './config'
-import { deepClone, findDuplicates, categories, relative } from './utils/helpers'
+import { deepClone, findDuplicates, categories } from './utils/helpers'
 import { applyFilter, countByFilter } from './utils/filters'
-import { formatDate } from './utils/format'
 import { on, off, emit } from './utils/bus'
 import ItemList from './components/ItemList'
 import ArchivedList from './components/ArchivedList'
 import AddItemForm from './components/AddItemForm'
 import Stats from './components/Stats'
+import SavedLabel from './components/SavedLabel'
 
 const NO_ITEMS = []
 
@@ -25,7 +25,6 @@ function App() {
   const [sortDir, setSortDir] = useState('desc')
   const [showArchived, setShowArchived] = useState(false)
   const [lastSaved, setLastSaved] = useState(null)
-  const [, setTick] = useState(0)
   const savedItems = useRef(NO_ITEMS)
 
   const handleAdd = useCallback(function (name, qty, category) {
@@ -76,18 +75,14 @@ function App() {
     return function () { cancelled = true }
   }, [])
 
-  // bus subscription and the one-second tick that refreshes the "Saved" line
+  // bus subscription
   useEffect(function () {
     function handleBusAdd(item) {
       handleAdd(item.name, item.qty, item.category)
     }
     on('item:add', handleBusAdd)
-    const timer = setInterval(function () {
-      setTick(function (t) { return t + 1 })
-    }, 1000)
     return function () {
       off('item:add', handleBusAdd)
-      clearInterval(timer)
     }
   }, [handleAdd])
 
@@ -174,9 +169,7 @@ function App() {
       <Stats items={items} open={openCount} done={doneCount} />
       <ItemList items={visible} onToggle={handleToggle} onRemove={handleRemove} />
       {showArchived && <ArchivedList items={items} onToggle={handleToggle} onRemove={handleRemove} />}
-      <div className="stats">
-        {lastSaved ? 'Saved ' + relative(lastSaved) + ' (' + formatDate(lastSaved) + ')' : 'Not saved yet'}
-      </div>
+      <SavedLabel lastSaved={lastSaved} />
     </div>
   )
 }
