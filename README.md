@@ -1,6 +1,6 @@
 # grocerly
 
-Grocery list app built with React and Vite.
+A small grocery list app, built with React and Vite.
 
 ## Requirements
 
