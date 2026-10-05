@@ -41,17 +41,25 @@ test('text words and comparison words are separated', () => {
   expect(q.tests.map((t) => t(eggs))).toEqual([true, false])
 })
 
-test('a comparison on a missing field is false', () => {
-  expect(parseQuery('price>1').tests[0](milk)).toBe(false)
+test('a comparison on an unknown field is ignored', () => {
+  expect(parseQuery('price>1')).toEqual({ text: '', tests: [] })
+  expect(parseQuery('constructor>1').tests).toEqual([])
 })
 
-test('a single "=" is an assignment: it mutates the item and returns the assigned value', () => {
+test('a single "=" compares and does not mutate the item', () => {
   const item = { name: 'Milk', qty: 2 }
   const q = parseQuery('qty=7')
-  expect(q.tests[0](item)).toBe(7)
-  expect(item.qty).toBe(7)
+  expect(q.tests[0](item)).toBe(false)
+  expect(item.qty).toBe(2)
+  expect(parseQuery('qty=2').tests[0](item)).toBe(true)
 })
 
-test('a comparison word that is not valid after "item." throws on parse', () => {
-  expect(() => parseQuery('>5')).toThrow(SyntaxError)
+test('malformed comparison words are ignored instead of throwing', () => {
+  expect(parseQuery('>5')).toEqual({ text: '', tests: [] })
+  expect(parseQuery('qty>').tests).toEqual([])
+})
+
+test('words with code in them are never executed', () => {
+  expect(parseQuery('qty>alert(1)').tests[0](milk)).toBe(false)
+  expect(parseQuery('name=Milk').tests[0](milk)).toBe(true)
 })
