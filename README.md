@@ -35,5 +35,5 @@ localStorage holds no items, the app loads its initial list from
 ## Development environment
 
 `.devcontainer/devcontainer.json` defines a dev container based on the
-`mcr.microsoft.com/devcontainers/javascript-node:24` image. It runs `npm ci`
+`mcr.microsoft.com/devcontainers/javascript-node:20` image. It runs `npm ci`
 after the container is created, so you can then use the commands above.
