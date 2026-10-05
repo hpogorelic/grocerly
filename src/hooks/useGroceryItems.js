@@ -1,4 +1,4 @@
-import { useReducer, useState, useEffect, useMemo, useRef } from 'react'
+import { useReducer, useState, useEffect, useRef } from 'react'
 import { SEED_URL, STORAGE_KEY, DEBUG } from '../config'
 import { itemsReducer } from './itemsReducer'
 
@@ -10,6 +10,7 @@ export function useGroceryItems() {
   const [items, dispatch] = useReducer(itemsReducer, NO_ITEMS)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [lastSaved, setLastSaved] = useState(null)
   const savedItems = useRef(NO_ITEMS)
 
   // load from storage, or from the seed when storage is empty
@@ -41,17 +42,14 @@ export function useGroceryItems() {
     return function () { cancelled = true }
   }, [])
 
-  // persist whenever the items change (not for the initial empty list)
+  // persist whenever the items change (not for the initial empty list) and
+  // record the time of the write
   useEffect(function () {
     if (items === savedItems.current) return
     savedItems.current = items
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
+    setLastSaved(new Date().toISOString())
     if (DEBUG) console.log('saved', items.length, 'items')
-  }, [items])
-
-  // the save time follows the items in the same render (null until the first load)
-  const lastSaved = useMemo(function () {
-    return items === NO_ITEMS ? null : new Date().toISOString()
   }, [items])
 
   return { items, loading, error, lastSaved, dispatch }
