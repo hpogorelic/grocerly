@@ -1,9 +1,12 @@
-import { API_KEY, SEED_URL, STORAGE_KEY, DEBUG } from './config'
+import * as config from './config'
+import configSource from './config.js?raw'
+
+const { SEED_URL, STORAGE_KEY, DEBUG } = config
 
 describe('config', () => {
-  test('API_KEY is a hard-coded string constant, not a function', () => {
-    expect(typeof API_KEY).toBe('string')
-    expect(API_KEY).toMatch(/^gk_live_[0-9a-f]+$/)
+  test('no API key is exported or hardcoded in the config source', () => {
+    expect(config).not.toHaveProperty('API_KEY')
+    expect(configSource).not.toMatch(/gk_[l]ive|API_KEY/)
   })
 
   test('SEED_URL points at the seed file served from the site root', () => {

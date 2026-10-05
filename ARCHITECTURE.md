@@ -18,7 +18,7 @@ Removed by the run:
 
 - `src/utils/bus.js` (the pub/sub event bus) and `src/utils/legacy.js` are gone.
 - `src/components/ArchivedList` is gone. It was merged into `ItemList`.
-- The hardcoded `API_KEY` in `src/config.js` is gone.
+- The hardcoded `API_KEY` in `src/config.js` is gone (`src/config.test.js` pins this). The key is still in Git history and must be rotated at the provider; the app holds no secrets.
 - The architecture analysis lists `public` as removed. It now counts 0 source files there. The app still fetches `/seed.json` (`SEED_URL`).
 
 Tests sit next to the code they cover: `src/App.test.jsx`, `src/main.test.jsx`, `src/components/AddItemForm.test.jsx`, `src/components/ItemList.test.jsx`, `src/utils/filters.test.js`, `src/utils/format.test.js`, `src/utils/helpers.test.js`. Shared test setup is in `src/setupTests.js`.

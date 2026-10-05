@@ -22,7 +22,9 @@ npm run preview # serve the production build locally
 
 An API key beginning `gk_live_7f3a…` used to be hardcoded in `src/config.js`.
 It has been deleted from the code, but it is still in the Git history, so treat
-it as compromised: revoke and rotate it at the provider.
+it as compromised: the account owner must revoke and rotate it at the provider.
+The app needs no API key. If one is ever needed, keep it on a server: a `VITE_`
+variable is inlined into the client bundle and would leak it again.
 
 ## Data
 
