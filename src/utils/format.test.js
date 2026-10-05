@@ -13,7 +13,7 @@ test('pluralize', () => {
   expect(pluralize(2, 'item')).toBe('2 items')
 })
 
-test('formatDate uses ISO style', () => {
-  // date format was changed in 0.3.0, test never updated
-  expect(formatDate('2024-11-02T09:15:00Z')).toBe('2024-11-02 09:15')
+test('formatDate uses DD.MM.YYYY HH:mm style in local time', () => {
+  // moment formats in local time, so build the input from a local Date
+  expect(formatDate(new Date(2024, 10, 2, 9, 15))).toBe('02.11.2024 09:15')
 })

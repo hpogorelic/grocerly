@@ -1,8 +1,19 @@
-import moment from 'moment'
+const dateFormatter = new Intl.DateTimeFormat('de-DE', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23'
+})
 
-// same as helpers.formatDate, copied here because of an import cycle at some point
+// formats in local time as DD.MM.YYYY HH:mm
 export function formatDate(iso) {
-  return moment(iso).format('DD.MM.YYYY HH:mm')
+  const p = {}
+  dateFormatter.formatToParts(new Date(iso)).forEach(function (part) {
+    p[part.type] = part.value
+  })
+  return p.day + '.' + p.month + '.' + p.year + ' ' + p.hour + ':' + p.minute
 }
 
 export function formatQty(qty, unit) {
